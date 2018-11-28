@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'PDKeychainBindingsController'
-  s.version      = '1.0.0'
+  s.version      = '1.0.1'
   s.summary      = 'OS X and iOS Keychain Access patterned after NSUserDefaults.'
   s.author = {
     'Carl Brown' => 'carlb@pdagent.com'
@@ -29,8 +29,8 @@ Pod::Spec.new do |s|
   LICENSE
   }
   s.source = {
-    :git => 'https://github.com/carlbrown/PDKeychainBindingsController.git',
-    :tag => '1.0.0'
+    :git => 'https://github.com/silvansky/PDKeychainBindingsController.git',
+    :tag => '1.0.1'
   }
   s.source_files = 'PDKeychainBindingsController/*.{h,m}'
   s.requires_arc = true
