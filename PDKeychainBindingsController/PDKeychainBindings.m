@@ -55,6 +55,11 @@
              forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName]];
 }
 
+- (void)removeAllObjects
+{
+    [PDKeychainBindingsController.sharedKeychainBindingsController removeAllValues];
+}
+
 - (NSString *)stringForKey:(NSString *)defaultName { return [self objectForKey:defaultName]; }
 
 @end

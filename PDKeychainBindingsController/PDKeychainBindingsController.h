@@ -30,6 +30,8 @@
 
 - (NSString*) stringForKey:(NSString*)k;
 
+- (void)removeAllValues;
+
 #if !TARGET_OS_IPHONE // The following methods are OSX-only
 
 - (void)                  useDefaultKeychain;

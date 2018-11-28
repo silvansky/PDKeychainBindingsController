@@ -32,6 +32,8 @@
 
 - (void) removeObjectForKey:(NSString*)def;
 
+- (void)removeAllObjects;
+
 
 
 @end

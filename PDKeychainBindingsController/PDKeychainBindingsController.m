@@ -162,6 +162,14 @@ handleError:
 	return string;	
 }
 
+- (void)removeAllValues
+{
+    for (NSString *key in _valueBuffer.allKeys) {
+        [self setValue:nil
+            forKeyPath:[NSString stringWithFormat:@"values.%@", key]];
+    }
+}
+
 - (BOOL)storeString:(NSString*)string forKey:(NSString*)key {
     return [self storeString:string forKey:key accessibleAttribute:kSecAttrAccessibleWhenUnlocked];
 }
