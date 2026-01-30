@@ -1,4 +1,0 @@
-module PDKeychainBindingsController {
-    umbrella header "/Users/valentine/Projects/PDKeychainBindingsController/Sources/PDKeychainBindingsController/include/PDKeychainBindingsController/PDKeychainBindingsController.h"
-    export *
-}

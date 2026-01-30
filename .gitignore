@@ -1,2 +1,4 @@
 PDKeychainBindingsController.xcodeproj/xcuserdata
 PDKeychainBindingsController.xcodeproj/project.xcworkspace/xcuserdata
+.build/
+.swiftpm/
