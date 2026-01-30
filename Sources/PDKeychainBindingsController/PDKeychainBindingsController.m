@@ -5,7 +5,7 @@
     @copyright  2011 PDAgent, LLC. Released under MIT License.
 */
 
-#import "include/PDKeychainBindingsController/PDKeychainBindingsController.h"
+#import "include/PDKeychainBindingsController.h"
 #import <Security/Security.h>
 
 @implementation PDKeychainBindingsController {
