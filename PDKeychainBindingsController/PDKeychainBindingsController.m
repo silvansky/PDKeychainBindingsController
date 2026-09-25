@@ -24,6 +24,13 @@
 
 static PDKeychainBindingsController *sharedInstance = nil;
 
+- (instancetype)init {
+    if ((self = [super init])) {
+        _valueBuffer = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
 + (PDKeychainBindingsController*) sharedKeychainBindingsController {
     static dispatch_once_t onceQueue;
 
@@ -164,9 +171,11 @@ handleError:
 
 - (void)removeAllValues
 {
-    for (NSString *key in _valueBuffer.allKeys) {
-        [self setValue:nil
-            forKeyPath:[NSString stringWithFormat:@"values.%@", key]];
+    @synchronized (self) {
+        for (NSString *key in [_valueBuffer.allKeys copy]) {
+            [self setValue:nil
+                forKeyPath:[NSString stringWithFormat:@"values.%@", key]];
+        }
     }
 }
 
@@ -258,37 +267,37 @@ return !result;
 @synthesize keychainBindings = _keychainBindings;
 
 - (PDKeychainBindings *) keychainBindings {
-    if (_keychainBindings == nil) {
-        _keychainBindings = [[PDKeychainBindings alloc] init]; 
+    @synchronized (self) {
+        if (_keychainBindings == nil) {
+            _keychainBindings = [[PDKeychainBindings alloc] init];
+        }
+        return _keychainBindings;
     }
-    if (_valueBuffer==nil) {
-        _valueBuffer = [[NSMutableDictionary alloc] init];
-    }
-    return _keychainBindings;
 }
 
 - values {
-    if (_valueBuffer==nil) {
-        _valueBuffer = [[NSMutableDictionary alloc] init];
-    }
     return _valueBuffer;
 }
 
+// _valueBuffer is shared across threads: every access goes through @synchronized (self), which is recursive.
+// KVO notifications from [super setValue:forKeyPath:] fire while the lock is held.
 - valueForKeyPath:(NSString *)keyPath {
-    NSRange firstSeven=NSMakeRange(0, 7);
-    if (NSEqualRanges([keyPath rangeOfString:@"values."],firstSeven)) {
-        //This is a values keyPath, so we need to check the keychain
-        NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
-        NSString *retrievedString = [self stringForKey:subKeyPath];
-        if (retrievedString) {
-            if (![_valueBuffer objectForKey:subKeyPath] || ![[_valueBuffer objectForKey:subKeyPath] isEqualToString:retrievedString]) {
-                //buffer has wrong value, need to update it
-                [_valueBuffer setValue:retrievedString forKey:subKeyPath];
+    @synchronized (self) {
+        NSRange firstSeven=NSMakeRange(0, 7);
+        if (NSEqualRanges([keyPath rangeOfString:@"values."],firstSeven)) {
+            //This is a values keyPath, so we need to check the keychain
+            NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
+            NSString *retrievedString = [self stringForKey:subKeyPath];
+            if (retrievedString) {
+                if (![_valueBuffer objectForKey:subKeyPath] || ![[_valueBuffer objectForKey:subKeyPath] isEqualToString:retrievedString]) {
+                    //buffer has wrong value, need to update it
+                    [_valueBuffer setValue:retrievedString forKey:subKeyPath];
+                }
             }
         }
+
+        return [super valueForKeyPath:keyPath];
     }
-    
-    return [super valueForKeyPath:keyPath];
 }
 
 - (void)setValue:value forKeyPath:(NSString*)keyPath {
@@ -296,26 +305,28 @@ return !result;
 }
 
 - (void)setValue:value forKeyPath:(NSString*)keyPath accessibleAttribute:(CFTypeRef)accessibleAttribute {
-    NSRange firstSeven=NSMakeRange(0, 7);
-    if (NSEqualRanges([keyPath rangeOfString:@"values."],firstSeven)) {
-        //This is a values keyPath, so we need to check the keychain
-        NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
-        NSString *retrievedString = [self stringForKey:subKeyPath];
-        if (retrievedString) {
-            if (![value isEqualToString:retrievedString]) {
+    @synchronized (self) {
+        NSRange firstSeven=NSMakeRange(0, 7);
+        if (NSEqualRanges([keyPath rangeOfString:@"values."],firstSeven)) {
+            //This is a values keyPath, so we need to check the keychain
+            NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
+            NSString *retrievedString = [self stringForKey:subKeyPath];
+            if (retrievedString) {
+                if (![value isEqualToString:retrievedString]) {
+                    [self storeString:value forKey:subKeyPath accessibleAttribute:accessibleAttribute];
+                }
+                if (![_valueBuffer objectForKey:subKeyPath] || ![[_valueBuffer objectForKey:subKeyPath] isEqualToString:value]) {
+                    //buffer has wrong value, need to update it
+                    [_valueBuffer setValue:value forKey:subKeyPath ];
+                }
+            } else {
+                //First time to set it
                 [self storeString:value forKey:subKeyPath accessibleAttribute:accessibleAttribute];
+                [_valueBuffer setValue:value forKey:subKeyPath];
             }
-            if (![_valueBuffer objectForKey:subKeyPath] || ![[_valueBuffer objectForKey:subKeyPath] isEqualToString:value]) {
-                //buffer has wrong value, need to update it
-                [_valueBuffer setValue:value forKey:subKeyPath ];
-            }
-        } else {
-            //First time to set it
-            [self storeString:value forKey:subKeyPath accessibleAttribute:accessibleAttribute];
-            [_valueBuffer setValue:value forKey:subKeyPath];
         }
-    } 
-    [super setValue:value forKeyPath:keyPath];
+        [super setValue:value forKeyPath:keyPath];
+    }
 }
 
 @end

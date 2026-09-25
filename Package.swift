@@ -12,6 +12,10 @@ let package = Package(
             name: "PDKeychainBindingsController",
             path: "Sources/PDKeychainBindingsController",
             publicHeadersPath: "include"
+        ),
+        .testTarget(
+            name: "PDKeychainBindingsControllerTests",
+            dependencies: ["PDKeychainBindingsController"]
         )
     ]
 )
